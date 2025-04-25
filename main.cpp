@@ -35,8 +35,8 @@ int optimalBSTWithRotation(const vector<int>& freq, int R) {
 }
 
 int main() {
-    vector<int> freq = {4, 2, 6, 3};  // From 10(4), 20(2), 30(6), 40(3)
+    vector<int> freq = {4, 2, 6, 3}; 
     int R = 5;
-    cout << optimalBSTWithRotation(freq, R) << endl;  // Should print 148
+    cout << optimalBSTWithRotation(freq, R) << endl;
     return 0;
 }
