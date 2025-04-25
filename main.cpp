@@ -1,42 +1,61 @@
 #include <iostream>
-#include <vector>
 #include <climits>
-
+#include <unordered_map>
 using namespace std;
 
-int optimalBSTWithRotation(const vector<int>& freq, int R) {
-    int n = freq.size();
-    vector<vector<int>> dp(n, vector<int>(n, 0));
-    vector<vector<int>> sumFreq(n, vector<int>(n, 0));
+// Find optimal cost to construct a binary search tree from keys i to j
+// where each key k occurs freq[k] number of times
+int findOptimalCost(int freq[], int i, int j, int level, int rotationCost, auto &lookup)
+{
+	// base case
+	if (j < i) {
+		return 0;
+	}
 
-    // Precompute prefix sums of frequencies
-    for (int i = 0; i < n; ++i) {
-        sumFreq[i][i] = freq[i];
-        for (int j = i + 1; j < n; ++j) {
-            sumFreq[i][j] = sumFreq[i][j - 1] + freq[j];
-        }
-    }
+	// construct a unique map key from dynamic elements of the input
+	string key = to_string(i) + "|" + to_string(j) + "|" + to_string(level);
 
-    for (int len = 1; len <= n; ++len) {
-        for (int i = 0; i <= n - len; ++i) {
-            int j = i + len - 1;
-            dp[i][j] = INT_MAX;
-            for (int k = i; k <= j; ++k) {
-                int costLeft = (k > i) ? dp[i][k - 1] : 0;
-                int costRight = (k < j) ? dp[k + 1][j] : 0;
-                int rotations = ((k > i) ? 1 : 0) + ((k < j) ? 1 : 0);
-                int totalCost = costLeft + costRight + sumFreq[i][j] + R * rotations;
-                dp[i][j] = min(dp[i][j], totalCost);
-            }
-        }
-    }
+	// if the subproblem is seen for the first time, solve it and
+	// store its result in a map
+	if (lookup.find(key) == lookup.end())
+	{
+		lookup[key] = INT_MAX;
 
-    return dp[0][n - 1];
+		int leftOptimalCost, rightOptimalCost;
+
+		// consider each key as root and recursively find an optimal solution
+		for (int k = i; k <= j; k++)
+		{
+			// recursively find the optimal cost of the left subtree
+			leftOptimalCost = findOptimalCost(freq, i, k - 1, level + 1, rotationCost, lookup);
+
+			// recursively find the optimal cost of the right subtree
+			rightOptimalCost = findOptimalCost(freq, k + 1, j, level + 1, rotationCost, lookup);
+
+			// current node's cost is freq[k]×level
+			// Add the rotation cost for each rotation
+			int cost = freq[k] * level + leftOptimalCost + rightOptimalCost + rotationCost;
+
+			// update the optimal cost
+			lookup[key] = min(lookup[key], cost);
+		}
+	}
+
+	// return the subproblem solution from the map
+	return lookup[key];
 }
 
-int main() {
-    vector<int> freq = {4, 2, 6, 3}; 
-    int R = 5;
-    cout << optimalBSTWithRotation(freq, R) << endl;
-    return 0;
+int main()
+{
+	int freq[] = { 4, 2, 6, 3 };
+	int n = sizeof(freq) / sizeof(freq[0]);
+	int rotationCost = 5; // Fixed rotation cost for every operation
+
+	// create a map to store solutions to subproblems
+	unordered_map<string, int> lookup;
+
+	cout << "The optimal cost of constructing BST with rotation cost is "
+		 << findOptimalCost(freq, 0, n - 1, 1, rotationCost, lookup);
+
+	return 0;
 }
